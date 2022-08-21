@@ -5,19 +5,24 @@ export const Todo = () => {
     const [data, setData] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState(false);
+    const [page,setPage] = React.useState(1);
+    const [totalItem,setTotalItem] = React.useState(0);
 
     React.useEffect(()=>{
         fetchAndUpdateData();
-    },[])
+    },[page])
 
     const fetchAndUpdateData = () => {
         setLoading(true);
-        fetch(`http://localhost:8080/tasks`)
-            .then((res)=>res.json())
+        fetch(`http://localhost:8080/tasks?_page=${page}&_limit=3`)
+            .then((res)=>{
+                let total = res.headers.get("X-Total-Count");
+                setTotalItem(+total);
+                return res.json()
+            })
             .then((res)=>setData(res))
             .catch((err)=>setError(true))
             .finally(()=>setLoading(false))
-        
     }
 
     const addTodo = () =>{
@@ -48,10 +53,14 @@ export const Todo = () => {
             {
                 loading ? (<h1>Loading.....</h1>
                 ) : error ? (<h1>Something went Wrong.....</h1>
-                ) : data.map((el)=>{
+                ) : (data.map((el)=>{
                     return <p>{el.title}</p>
-                })
+                }))
             }
+            <div>
+            <button disabled={page===1} onClick={()=>{setPage(page-1)}}>Prev</button>
+            <button disabled={page===Math.ceil(totalItem/3)} onClick={()=>{setPage(page+1)}}>Next</button>
+            </div>
         </div>
     )
 }
